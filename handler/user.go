@@ -47,7 +47,7 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 
 // SignInHandler 登录接口
 func SignInHandler(w http.ResponseWriter, r *http.Request) {
-	// 1.教研用户名及密码
+	// 1.验证用户名及密码
 	r.ParseForm()
 	username := r.FormValue("username")
 	passwd := r.FormValue("password")
@@ -94,24 +94,34 @@ func GenToken(username string) string {
 
 // UserInfoHandler 查询用户信息
 func UserInfoHandler(w http.ResponseWriter, r *http.Request) {
-	// 1.解析请求数据
+	/*
+		在拦截器中实现
+		// 1.解析请求数据
+		err := r.ParseForm()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		username := r.FormValue("username")
+		token := r.FormValue("token")
+
+		// 2.验证token是否有效
+		ok := db.IsTokenValid(username, token)
+		if !ok {
+			w.WriteHeader(http.StatusForbidden)
+			log.Println("Token is not right")
+			return
+		}
+	*/
+
+	// 3.查询用户信息
 	err := r.ParseForm()
 	if err != nil {
 		log.Println(err)
 		return
 	}
 	username := r.FormValue("username")
-	token := r.FormValue("token")
 
-	// 2.验证token是否有效
-	ok := db.IsTokenValid(username, token)
-	if !ok {
-		w.WriteHeader(http.StatusForbidden)
-		log.Println("Token is not right")
-		return
-	}
-
-	// 3.查询用户信息
 	userinfo, err := db.GetUserInfo(username)
 	if err != nil {
 		w.WriteHeader(http.StatusForbidden)

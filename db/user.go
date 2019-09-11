@@ -95,7 +95,7 @@ func IsTokenValid(username, token string) bool {
 		log.Println(err)
 		return false
 	}
-	if time.Now().Unix()-int64(st) > 86400 {
+	if time.Now().Unix()-int64(st) > 86400 { // 一天之内有效
 		log.Println("Token out of date")
 		return false
 	}
