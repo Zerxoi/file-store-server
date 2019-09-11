@@ -91,3 +91,39 @@ func GenToken(username string) string {
 	ts := fmt.Sprintf("%x", time.Now().Unix())
 	return util.MD5([]byte(username+ts+"_tokensalt")) + ts[:8]
 }
+
+// UserInfoHandler 查询用户信息
+func UserInfoHandler(w http.ResponseWriter, r *http.Request) {
+	// 1.解析请求数据
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	username := r.FormValue("username")
+	token := r.FormValue("token")
+
+	// 2.验证token是否有效
+	ok := db.IsTokenValid(username, token)
+	if !ok {
+		w.WriteHeader(http.StatusForbidden)
+		log.Println("Token is not right")
+		return
+	}
+
+	// 3.查询用户信息
+	userinfo, err := db.GetUserInfo(username)
+	if err != nil {
+		w.WriteHeader(http.StatusForbidden)
+		log.Println(err)
+		return
+	}
+
+	// 4.组装并且相应用户数据
+	resp := util.RespMsg{
+		Code: 0,
+		Msg:  "OK",
+		Data: userinfo,
+	}
+	w.Write(resp.JSONBytes())
+}
