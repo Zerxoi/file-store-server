@@ -89,7 +89,7 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 func GenToken(username string) string {
 	// 40 bits (username + timestamp + tokenSalt) + timestamp[:8]
 	ts := fmt.Sprintf("%x", time.Now().Unix())
-	return util.MD5([]byte(username+ts+"_tokensalt")) + ts[:8]
+	return util.MD5([]byte(username+"_tokensalt")) + ts[:8]
 }
 
 // UserInfoHandler 查询用户信息

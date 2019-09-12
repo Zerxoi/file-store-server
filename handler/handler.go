@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"database/sql"
 	"encoding/json"
 	"file-store-server/db"
 	"file-store-server/meta"
@@ -206,4 +207,60 @@ func FileDeleteHandler(w http.ResponseWriter, r *http.Request) {
 	meta.RemovFileMeta(fileSha1)
 	w.WriteHeader(http.StatusOK)
 
+}
+
+// TryFastUploadHandler 尝试秒传接口
+func TryFastUploadHandler(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		log.Println("TryFastUploadHandler:", err)
+		return
+	}
+	username := r.FormValue("username")
+	filesha1 := r.FormValue("filesha1")
+	filename := r.FormValue("filename")
+	filesize, _ := strconv.Atoi(r.FormValue("filesize"))
+
+	/*
+		stmt, err := mysql.DBConn().Prepare("select file_sha1, file_size, file_name from tbl_file where file_sha1=? limit 1")
+		if err != nil {
+			log.Println("TryFastUploadHandler:", err)
+			return
+		}
+		defer stmt.Close()
+
+		row := stmt.QueryRow(filesha1)
+	*/
+
+	_, err = db.GetFileMeta(filesha1)
+	if err != nil {
+		if err == sql.ErrNoRows { // 数据库中没有该数据
+			resp := util.RespMsg{
+				Code: -1,
+				Msg:  "秒传失败",
+			}
+			w.Write(resp.JSONBytes())
+			return
+		}
+		// 服务器内部出错
+		log.Println("TryFastUploadHandler:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+
+	}
+
+	ok := db.OnUserFileUploadFinished(username, filesha1, filename, int64(filesize))
+	if ok {
+		resp := util.RespMsg{
+			Code: 0,
+			Msg:  "秒传成功",
+		}
+		w.Write(resp.JSONBytes())
+	} else {
+		resp := util.RespMsg{
+			Code: -2,
+			Msg:  "秒传失败,请稍后重试",
+		}
+		w.Write(resp.JSONBytes())
+	}
 }
