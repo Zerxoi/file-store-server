@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"file-store-server/db"
 	"file-store-server/meta"
 	"file-store-server/util"
 	"fmt"
@@ -56,8 +57,21 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		fileMeta.FileSha1 = util.FileSha1(nf)
 		// meta.UpdateFileMeta(fileMeta)
 		_ = meta.UpdateFileMetaDB(fileMeta)
+		// TODO: 更新用户文件表
+		err = r.ParseForm()
+		if err != nil {
+			return
+		}
 
-		http.Redirect(w, r, "/file/upload/suc", http.StatusFound)
+		// 什么时候给了请求 username 参数??????????????
+		username := r.FormValue("username")
+		ok := db.OnUserFileUploadFinished(username, fileMeta.FileSha1, fileMeta.FileName, fileMeta.FileSize)
+		if !ok {
+			w.Write([]byte("Upload Failed"))
+			return
+		}
+
+		http.Redirect(w, r, "/static/view/home.html", http.StatusFound)
 	}
 }
 
@@ -92,14 +106,25 @@ func FileQueryHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
 	limitCnt, _ := strconv.Atoi(r.Form.Get("limit"))
-	fMetas := meta.GetLastFileMetas(limitCnt)
-	data, err := json.Marshal(fMetas)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		log.Printf("Query file meta failed: %s\n", err)
+	username := r.FormValue("username")
+	// fMetas := meta.GetLastFileMetas(limitCnt)
+	userFiles := db.QueryUserFile(username, limitCnt)
+	if userFiles == nil {
+		log.Println("FileQueryHandler: not Found")
 		return
 	}
-	w.Write(data)
+
+	// resp := util.RespMsg{
+	// 	Code: 0,
+	//	Msg:  "OK",
+	//	Data: userFiles,
+	// }
+	jsbytes, err := json.Marshal(userFiles)
+	if err != nil {
+		log.Println("FileQueryHandler:", err)
+		return
+	}
+	w.Write(jsbytes)
 }
 
 // DownloadHandler 下载文件
