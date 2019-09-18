@@ -3,8 +3,11 @@ package handler
 import (
 	"database/sql"
 	"encoding/json"
+	"file-store-server/common"
+	"file-store-server/config"
 	"file-store-server/db"
 	"file-store-server/meta"
+	"file-store-server/mq"
 	"file-store-server/store/oss"
 	"file-store-server/util"
 	"fmt"
@@ -57,19 +60,40 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 
 		nf.Seek(0, 0)
 		fileMeta.FileSha1 = util.FileSha1(nf)
+		ossPath := "oss/" + header.Filename
 
-		ossPath := "oss/" + fileMeta.FileSha1
-		err = oss.Bucket().PutObject(ossPath, nf)
+		data := mq.TransferData{
+			FileSha1:      fileMeta.FileSha1,
+			CurLocation:   fileMeta.Location,
+			DestLocation:  ossPath,
+			DestStoreType: common.StoreOSS,
+		}
+		pubData, err := json.Marshal(data)
 		if err != nil {
 			log.Println("UploadHandler:", err)
-			w.Write([]byte("Upload failed"))
 			return
 		}
+		ok := mq.Publish(config.TransExchangeName, config.TransOSSRoutingKey, pubData)
+		log.Println("Producer publish", string(pubData), "to", config.TransExchangeName)
+		if !ok {
+			// TODO: 加入重试发送逻辑
+		}
+		//err = oss.Bucket().PutObject(ossPath, nf)
+		//if err != nil {
+		//	log.Println("UploadHandler:", err)
+		//	w.Write([]byte("Upload failed"))
+		//	return
+		//}
 
-		fileMeta.Location = ossPath
-		// meta.UpdateFileMeta(fileMeta)
-		_ = meta.UpdateFileMetaDB(fileMeta)
-		// TODO: 更新用户文件表
+		//fileMeta.Location = ossPath
+
+		ok = meta.UpdateFileMetaDB(fileMeta)
+		if !ok {
+			log.Println("Failed to update file meta DB")
+			return
+		}
+		// log.Println("文件数据库更新")
+
 		err = r.ParseForm()
 		if err != nil {
 			return
@@ -77,11 +101,12 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 
 		// 什么时候给了请求 username 参数??????????????
 		username := r.FormValue("username")
-		ok := db.OnUserFileUploadFinished(username, fileMeta.FileSha1, fileMeta.FileName, fileMeta.FileSize)
+		ok = db.OnUserFileUploadFinished(username, fileMeta.FileSha1, fileMeta.FileName, fileMeta.FileSize)
 		if !ok {
 			w.Write([]byte("Upload Failed"))
 			return
 		}
+		// log.Println("用户文件数据库更新")
 
 		http.Redirect(w, r, "/static/view/home.html", http.StatusFound)
 	}
