@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"file-store-server/db"
 	"file-store-server/meta"
+	"file-store-server/store/oss"
 	"file-store-server/util"
 	"fmt"
 	"io"
@@ -56,6 +57,16 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 
 		nf.Seek(0, 0)
 		fileMeta.FileSha1 = util.FileSha1(nf)
+
+		ossPath := "oss/" + fileMeta.FileSha1
+		err = oss.Bucket().PutObject(ossPath, nf)
+		if err != nil {
+			log.Println("UploadHandler:", err)
+			w.Write([]byte("Upload failed"))
+			return
+		}
+
+		fileMeta.Location = ossPath
 		// meta.UpdateFileMeta(fileMeta)
 		_ = meta.UpdateFileMetaDB(fileMeta)
 		// TODO: 更新用户文件表
@@ -263,4 +274,21 @@ func TryFastUploadHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Write(resp.JSONBytes())
 	}
+}
+
+// DownloadURLHandler 生成文件的下载地址
+func DownloadURLHandler(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	filesha1 := r.FormValue("filesha1")
+	row, _ := db.GetFileMeta(filesha1)
+	var signedURL string
+	if row.FileAddr.Valid {
+		signedURL = oss.DownloadURL(string(row.FileAddr.String))
+		if signedURL == "" {
+			log.Println("DownloadURLHandler: Failed to get file's address")
+			return
+		}
+		w.Write([]byte(signedURL))
+	}
+	log.Println("File's address is null")
 }
