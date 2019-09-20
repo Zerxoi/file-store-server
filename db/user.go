@@ -134,7 +134,6 @@ func GetUserInfo(username string) (UserInfo, error) {
 		log.Println(err)
 		return userinfo, err
 	}
-
 	return userinfo, nil
 }
 

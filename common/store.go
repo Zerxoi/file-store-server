@@ -1,6 +1,6 @@
 package common
 
-// 存储类型(表示文件存到哪里)
+// StoreType 存储类型(表示文件存到哪里)
 type StoreType int
 
 const (

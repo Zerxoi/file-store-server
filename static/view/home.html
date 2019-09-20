@@ -73,13 +73,13 @@
       error: function (err) {
           alert(err);
       },
-      success: function (body) {
-        var resp = JSON.parse(body);
-        if (resp.code == 10005) {
+      success: function (json) {
+        // var resp = JSON.parse(body);
+        if (json.code == 10005) {
           window.location.href = "/static/view/signin.html";
         }
-        document.getElementById("username").innerHTML = resp.data.Username;
-        document.getElementById("regtime").innerHTML = resp.data.SignupAt;
+        document.getElementById("username").innerHTML = json.data.Username;
+        document.getElementById("regtime").innerHTML = json.data.SignupAt;
         updateFileList();
       }
     });
@@ -95,38 +95,40 @@
       error: function (err) {
           alert(err);
       },
-      success: function (body) {
-        if (!body) {
-          return;
-        }
-        var data = JSON.parse(body);
-        if (!data || data.length <= 0) {
+      success: function (json) {
+        if (!json) {
           return;
         }
 
-        for (var i = 0; i < data.length; i++) {
+        if (json.code !== 0) {
+          return;
+        }
+        var files = JSON.parse(json.data);
+
+        for (var i = 0; i < files.length; i++) {
           var x = document.getElementById('filetbl').insertRow();
           var cell = x.insertCell();
-          cell.innerHTML = data[i].FileSha1.substr(0, 20) + "...";
+          cell.innerHTML = files[i].FileSha1;
 
           cell = x.insertCell();
-          cell.innerHTML = data[i].FileName;
+          cell.innerHTML = files[i].FileName;
 
           cell = x.insertCell();
-          cell.innerHTML = data[i].FileSize;
+          cell.innerHTML = files[i].FileSize;
 
           cell = x.insertCell();
-          cell.innerHTML = data[i].UploadAt;
+          cell.innerHTML = files[i].UploadAt;
 
           cell = x.insertCell();
-          cell.innerHTML = data[i].LastUpdate;
+          cell.innerHTML = files[i].LastUpdate;
         }
       }
     });
   }
 
   function toUploadFile() {
-    window.location.href = '/file/upload?' + queryParams();
+    // window.location.href = "/static/view/index.html";
+    window.location.href = '/static/view/index.html?' + queryParams();
   }
 
 </script>

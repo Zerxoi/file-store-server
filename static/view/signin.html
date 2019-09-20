@@ -76,11 +76,10 @@
             error: function(err) {
                     alert(err);
             },
-            success: function(body) {
-                var resp = JSON.parse(body);
-                localStorage.setItem("token", resp.data.Token)
-                localStorage.setItem("username", resp.data.Username)
-                window.location.href = resp.data.Location;
+            success: function(json) {
+                localStorage.setItem("token", json.data.Token)
+                localStorage.setItem("username", json.data.Username)
+                window.location.href = json.data.Location;
             }
         });
     }
