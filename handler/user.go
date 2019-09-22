@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"file-store-server/config"
 	"file-store-server/db"
 	"file-store-server/util"
 	"fmt"
@@ -9,10 +10,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-)
-
-const (
-	pwdSalt = "!@#$%^&*()"
 )
 
 // GETSignupHandler 返回处理页面
@@ -33,7 +30,7 @@ func POSTSignupHandler(c *gin.Context) {
 		return
 	}
 
-	encPasswd := util.Sha1([]byte(passwd + pwdSalt))
+	encPasswd := util.Sha1([]byte(passwd + config.PwdSalt))
 	ok := db.UserSignup(username, encPasswd)
 	if ok {
 		c.JSON(http.StatusOK, gin.H{
@@ -58,7 +55,7 @@ func POSTSigninHandler(c *gin.Context) {
 	// 1.验证用户名及密码
 	username := c.Request.FormValue("username")
 	passwd := c.Request.FormValue("password")
-	encpwd := util.Sha1([]byte(passwd + pwdSalt))
+	encpwd := util.Sha1([]byte(passwd + config.PwdSalt))
 	pwdChecked := db.UserSignIn(username, encpwd)
 	if !pwdChecked {
 		c.JSON(http.StatusOK, gin.H{

@@ -35,8 +35,10 @@ func UserSignup(username string, passwd string) bool {
 	}
 	rowsAffected, err := res.RowsAffected()
 	if err == nil && rowsAffected > 0 {
+		fmt.Println("用户注册成功")
 		return true
 	}
+	fmt.Println("用户注册失败")
 	return false
 }
 
