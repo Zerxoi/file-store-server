@@ -14,6 +14,13 @@ func Router() *gin.Engine {
 
 	router.GET("/user/signup", handler.GETSignupHandler)
 	router.POST("/user/signup", handler.POSTSignupHandler)
+	router.GET("/user/signin", handler.GETSigninHandler)
+	router.POST("/user/signin", handler.POSTSigninHandler)
 
+	router.Use(handler.HTTPInterceptor)
+
+	router.POST("/user/info", handler.POSTUserInfoHandler)
+
+	router.POST("/file/query", handler.POSTFileQueryHandler)
 	return router
 }

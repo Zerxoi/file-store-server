@@ -91,10 +91,10 @@
       error: function (err) {
           alert(textStatus);
       },
-      success: function (data) {
-        console.log(data)
+      success: function (json) {
+        console.log(json)
 
-        if (data == 'SUCCESS') {
+        if (json.code == 10000) {
           // 成功后跳到登录页
           document.getElementById("login_hint").style.display = "block";
           setTimeout(() => {

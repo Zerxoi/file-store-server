@@ -2,9 +2,13 @@ package handler
 
 import (
 	"context"
+	"file-store-server/config"
+	"file-store-server/db"
 	"file-store-server/service/account/proto"
+	"file-store-server/util"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro"
@@ -32,21 +36,89 @@ func GETSignupHandler(c *gin.Context) {
 func POSTSignupHandler(c *gin.Context) {
 	username := c.Request.FormValue("username")
 	passwd := c.Request.FormValue("password")
-	_, err := userCli.Signup(context.TODO(), &proto.ReqSignup{
+	resp, err := userCli.Signup(context.TODO(), &proto.ReqSignup{
 		Username: username,
 		Password: passwd,
 	})
 
 	if err != nil {
-		log.Println("客户端服务远程调用失败")
 		log.Println(err)
-		c.Status(http.StatusInternalServerError)
+		c.Error(err)
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+// GETSigninHandler 转跳至用户登录页面
+func GETSigninHandler(c *gin.Context) {
+	c.Redirect(http.StatusFound, "/static/view/signin.html")
+}
+
+// POSTSigninHandler 登陆处理
+func POSTSigninHandler(c *gin.Context) {
+	// 1.验证用户名及密码
+	username := c.Request.FormValue("username")
+	passwd := c.Request.FormValue("password")
+	encpwd := util.Sha1([]byte(passwd + config.PwdSalt))
+	resp, err := userCli.Signin(context.TODO(), &proto.ReqSignin{
+		Username: username,
+		Password: encpwd,
+	})
+	if err != nil {
+		log.Println(err)
+		c.Error(err) // 响应内容为空
+		return
+	}
+	c.JSON(http.StatusOK, resp)
+}
+
+// POSTUserInfoHandler 请求用户信息
+func POSTUserInfoHandler(c *gin.Context) {
+	username := c.Request.FormValue("username")
+	log.Println("UserName:", username)
+	resp, err := userCli.UserInfo(context.TODO(), &proto.ReqUserInfo{
+		Username: username,
+	})
+	if err != nil {
+		log.Println(err)
+		c.Error(err) // 响应内容为空
 		return
 	}
 
-	// c.JSON(http.StatusOK, gin.H{
-	// 	"code": resp.Code,
-	// 	"msg":  resp.Message,
-	// })
-	c.Data(http.StatusOK, "text/plain", []byte("SUCCESS"))
+	c.JSON(http.StatusOK, resp)
+}
+
+// POSTFileQueryHandler 获取文件队列的处理器
+func POSTFileQueryHandler(c *gin.Context) {
+	limitCnt, _ := strconv.Atoi(c.Request.FormValue("limit"))
+	username := c.Request.FormValue("username")
+	resp, err := userCli.UserFiles(context.TODO(), &proto.ReqUserFile{
+		Username: username,
+		Limit:    int32(limitCnt),
+	})
+	if err != nil {
+		log.Println(err)
+		c.Error(err) // 响应内容为空
+		return
+	}
+	c.JSON(http.StatusOK, resp)
+}
+
+// HTTPInterceptor HTTP 请求拦截器
+func HTTPInterceptor(c *gin.Context) {
+	username := c.Request.FormValue("username")
+	token := c.Request.FormValue("token")
+	ok := db.IsTokenValid(username, token)
+	if !ok {
+		c.Abort()
+		log.Println("Token is not validated")
+		resp := util.RespMsg{
+			Code: -3,
+			Msg:  "Token 无效",
+			Data: nil,
+		}
+		c.JSON(http.StatusOK, resp)
+		return
+	}
+	c.Next()
 }

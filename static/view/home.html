@@ -74,12 +74,12 @@
           alert(err);
       },
       success: function (json) {
-        // var resp = JSON.parse(body);
+        console.log(json)
         if (json.code == 10005) {
           window.location.href = "/static/view/signin.html";
         }
-        document.getElementById("username").innerHTML = json.data.Username;
-        document.getElementById("regtime").innerHTML = json.data.SignupAt;
+        document.getElementById("username").innerHTML = json.username;
+        document.getElementById("regtime").innerHTML = json.signupAt;
         updateFileList();
       }
     });
@@ -93,22 +93,25 @@
         limit: 15
       },
       error: function (err) {
-          alert(err);
+        console.log(err)
+        alert(err.responseText);
+          
       },
       success: function (json) {
+        console.log(json)
         if (!json) {
           return;
         }
 
-        if (json.code !== 0) {
+        if (json.code !== 10000) {
           return;
         }
-        var files = JSON.parse(json.data);
-
+        var files = JSON.parse(json.fileData);
+        console.log(files)
         for (var i = 0; i < files.length; i++) {
           var x = document.getElementById('filetbl').insertRow();
           var cell = x.insertCell();
-          cell.innerHTML = files[i].FileSha1;
+          cell.innerHTML = files[i].FileSha1.slice(0,8);
 
           cell = x.insertCell();
           cell.innerHTML = files[i].FileName;
@@ -127,7 +130,6 @@
   }
 
   function toUploadFile() {
-    // window.location.href = "/static/view/index.html";
     window.location.href = '/static/view/index.html?' + queryParams();
   }
 

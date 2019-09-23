@@ -77,9 +77,10 @@
                     alert(err);
             },
             success: function(json) {
-                localStorage.setItem("token", json.data.Token)
-                localStorage.setItem("username", json.data.Username)
-                window.location.href = json.data.Location;
+                localStorage.setItem("token", json.token)
+                localStorage.setItem("username", username.value)
+                console.log(localStorage)
+                window.location.href = "/static/view/home.html";
             }
         });
     }

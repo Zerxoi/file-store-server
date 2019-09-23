@@ -113,6 +113,11 @@ func IsTokenValid(username, token string) bool {
 
 	var dbtoken string
 	err = stmt.QueryRow(username).Scan(&dbtoken)
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+	fmt.Println(dbtoken)
 	if dbtoken[:32] == token[:32] {
 		return true
 	}

@@ -50,7 +50,7 @@ func GETSigninHandler(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/static/view/signin.html")
 }
 
-// POSTSigninHandler 登c陆处理
+// POSTSigninHandler 登陆处理
 func POSTSigninHandler(c *gin.Context) {
 	// 1.验证用户名及密码
 	username := c.Request.FormValue("username")
