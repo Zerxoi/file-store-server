@@ -95,7 +95,6 @@ func (u *User) UserFiles(c context.Context, req *proto.ReqUserFile, resp *proto.
 	}
 
 	jsbytes, err := json.Marshal(userFiles)
-	fmt.Println(jsbytes)
 	if err != nil {
 		log.Println("UserFiles: JSON Marshal 失败")
 		return fmt.Errorf("UserFiles: JSON Marshal 失败")

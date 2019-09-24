@@ -92,6 +92,7 @@ func UpdateToken(username, token string) bool {
 func IsTokenValid(username, token string) bool {
 	// 检查token时效性
 	var st int64
+	fmt.Println(token)
 	_, err := fmt.Sscanf(token[32:], "%x", &st)
 	if err != nil {
 		log.Println(err)
@@ -117,7 +118,6 @@ func IsTokenValid(username, token string) bool {
 		fmt.Println(err)
 		return false
 	}
-	fmt.Println(dbtoken)
 	if dbtoken[:32] == token[:32] {
 		return true
 	}

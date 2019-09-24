@@ -26,7 +26,7 @@ import (
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "GET" {
 		// 返回上传 HTML 页面
-		data, err := ioutil.ReadFile("./static/view/index.html")
+		data, err := ioutil.ReadFile("./static/view/upload.html")
 		if err != nil {
 			io.WriteString(w, fmt.Sprintf("Internal server error: %s", err))
 			return
@@ -117,7 +117,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 // GETUploadHandler 获取文件上传页面
 func GETUploadHandler(c *gin.Context) {
 	// 返回上传 HTML 页面
-	c.Redirect(http.StatusFound, "/static/view/index.html")
+	c.Redirect(http.StatusFound, "/static/view/upload.html")
 }
 
 // POSTUploadHandler 处理文件上传

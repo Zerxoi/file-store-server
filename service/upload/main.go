@@ -1,35 +1,36 @@
 package main
 
 import (
-	"file-store-server/route"
+	"file-store-server/service/upload/config"
+	upProto "file-store-server/service/upload/proto"
+	"file-store-server/service/upload/route"
+	"file-store-server/service/upload/rpc"
 	"log"
+
+	"github.com/micro/go-micro"
 )
 
+func startRPCService() {
+	service := micro.NewService(
+		micro.Name("go.micro.service.upload"),
+	)
+	service.Init()
+	upProto.RegisterUploadServiceHandler(service.Server(), new(rpc.Upload))
+	if err := service.Run(); err != nil {
+		log.Println(err)
+	}
+}
+
+// 提供外部用户上传文件功能
+func startAPIService() {
+	router := route.Router()
+	router.Run(config.UploadServiceHost)
+}
+
 func main() {
-	// http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+	// rpc 服务
+	go startRPCService()
 
-	// http.HandleFunc("/file/upload", handler.HTTPInterceptor(handler.UploadHandler))
-	// http.HandleFunc("/file/meta", handler.HTTPInterceptor(handler.GetFileMetaHandler))
-	// http.HandleFunc("/file/query", handler.HTTPInterceptor(handler.FileQueryHandler))
-	// http.HandleFunc("/file/download", handler.HTTPInterceptor(handler.DownloadHandler))
-	// http.HandleFunc("/file/update", handler.HTTPInterceptor(handler.FileMetaUpdateHandler))
-	// http.HandleFunc("/file/delete", handler.HTTPInterceptor(handler.FileDeleteHandler))
-	// http.HandleFunc("/file/fastupload", handler.HTTPInterceptor(handler.TryFastUploadHandler))
-	// http.HandleFunc("/file/downlaodurl", handler.HTTPInterceptor(handler.DownloadURLHandler))
-
-	// // 分块上传接口
-	// http.HandleFunc("/file/mpupload/init", handler.HTTPInterceptor(handler.InitialMultipartUploadHandler))
-	// http.HandleFunc("/file/mpupload/uppart", handler.HTTPInterceptor(handler.UploadPartHandler))
-	// http.HandleFunc("/file/mpupload/complete", handler.HTTPInterceptor(handler.CompleteUploadHandler))
-
-	// http.HandleFunc("/user/signup", handler.SignupHandler)
-	// http.HandleFunc("/user/signin", handler.SignInHandler)
-	// http.HandleFunc("/user/info", handler.HTTPInterceptor(handler.UserInfoHandler))
-
-	// err := http.ListenAndServe("localhost:8000", nil)
-	// if err != nil {
-	// 	log.Printf("Failed to start server: %s\n", err)
-	// }
-
-	log.Println(route.Router().Run("localhost:8000"))
+	// api 服务
+	startAPIService()
 }

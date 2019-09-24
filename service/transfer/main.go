@@ -26,6 +26,7 @@ func ProcesstTransfer(msg []byte) bool {
 		log.Println("ProcessTransfer:", err)
 		return false
 	}
+	defer f.Close()
 
 	// 3. 通过文件句柄将文件内容读出来并且上传到OSS
 	oss.Bucket().PutObject(pubData.DestLocation, f)
@@ -36,8 +37,13 @@ func ProcesstTransfer(msg []byte) bool {
 
 	// 4. 更新文件存储路径到文件表
 	ok := db.UpdateFileLocation(pubData.FileSha1, pubData.DestLocation)
-	if ok != true {
+	if !ok {
 		log.Println("ProcesstTransfer: Failed to update file's location.")
+		return false
+	}
+	err = os.Remove(pubData.CurLocation)
+	if err != nil {
+		log.Println("云端上传完成,删除本地文件失败!")
 		return false
 	}
 	return true
