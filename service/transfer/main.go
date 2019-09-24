@@ -5,9 +5,13 @@ import (
 	"file-store-server/config"
 	"file-store-server/db"
 	"file-store-server/mq"
+	"file-store-server/service/transfer/handler"
+	"file-store-server/service/transfer/proto"
 	"file-store-server/store/oss"
 	"log"
 	"os"
+
+	"github.com/micro/go-micro"
 )
 
 // ProcesstTransfer 处理文件的真正逻辑
@@ -50,6 +54,19 @@ func ProcesstTransfer(msg []byte) bool {
 }
 
 func main() {
-	log.Println("开始监听转移任务队列")
-	mq.StartConsume(config.TransOSSQueueName, "Transfer_OSS", ProcesstTransfer)
+	go func() {
+		log.Println("开始监听转移任务队列")
+		mq.StartConsume(config.TransOSSQueueName, "Transfer_OSS", ProcesstTransfer)
+	}()
+
+	// 创建一个服务
+	service := micro.NewService(
+		micro.Name("go.micro.service.transfer"),
+	)
+	service.Init()
+
+	proto.RegisterTransferServiceHandler(service.Server(), new(handler.Trans))
+	if err := service.Run(); err != nil {
+		log.Println(err)
+	}
 }

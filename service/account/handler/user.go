@@ -13,7 +13,7 @@ import (
 	"log"
 )
 
-// User UserService 接口的实现
+// User UserServiceHandler 接口的实现
 type User struct{}
 
 // Signup 处理用户注册请求

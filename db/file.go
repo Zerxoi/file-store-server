@@ -24,7 +24,7 @@ func OnFileUploadFinished(fileSha1 string, fileName string, fileSize int64, file
 
 	if rf, err := res.RowsAffected(); err == nil {
 		if rf <= 0 {
-			log.Printf("File with SHA1:%s has been uploaded before", fileSha1)
+			log.Printf("SHA1为%s的文件已存在", fileSha1)
 		}
 		return true
 	}
@@ -75,8 +75,7 @@ func UpdateFileLocation(filehash string, fileaddr string) bool {
 	}
 	if rf, err := ret.RowsAffected(); nil == err {
 		if rf <= 0 {
-			fmt.Printf("更新文件location失败, filehash:%s", filehash)
-			return false
+			fmt.Printf("文件地址在修改之前已经是 %s\n", fileaddr)
 		}
 		return true
 	}

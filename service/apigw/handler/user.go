@@ -90,7 +90,6 @@ func POSTSigninHandler(c *gin.Context) {
 // POSTUserInfoHandler 请求用户信息
 func POSTUserInfoHandler(c *gin.Context) {
 	username := c.Request.FormValue("username")
-	log.Println("UserName:", username)
 	resp, err := userCli.UserInfo(context.TODO(), &userProto.ReqUserInfo{
 		Username: username,
 	})

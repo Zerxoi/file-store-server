@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package proto;
+
+service TransferService {
+    // 文件转移
+    rpc Transfer(ReqTrans) returns (RespTrans) {}
+}
+
+message ReqTrans {
+    string fileSha1 = 1;
+    string curLocation = 2;
+    string destLocation = 3;
+    int32 destStoreType = 4;
+}
+
+message RespTrans {
+    int32 code = 1;
+    string message = 2;
+}

@@ -1,12 +1,10 @@
 package api
 
 import (
-	"encoding/json"
-	"file-store-server/common"
-	"file-store-server/config"
+	"context"
 	"file-store-server/db"
 	"file-store-server/meta"
-	"file-store-server/mq"
+	"file-store-server/service/transfer/proto"
 	"file-store-server/util"
 	"io"
 	"log"
@@ -14,8 +12,20 @@ import (
 	"os"
 	"time"
 
+	"github.com/micro/go-micro"
+
 	"github.com/gin-gonic/gin"
 )
+
+var transferCli proto.TransferService
+
+func init() {
+	service := micro.NewService()
+
+	service.Init()
+
+	transferCli = proto.NewTransferService("go.micro.service.transfer", service.Client())
+}
 
 // GETUploadHandler 获取文件上传页面
 func GETUploadHandler(c *gin.Context) {
@@ -96,29 +106,17 @@ func POSTUploadHandler(c *gin.Context) {
 		return
 	}
 
-	data := mq.TransferData{
-		FileSha1:      fileMeta.FileSha1,
-		CurLocation:   fileMeta.Location,
-		DestLocation:  "oss/" + header.Filename,
-		DestStoreType: common.StoreOSS,
-	}
-	pubData, err := json.Marshal(data)
-	if err != nil {
-		msg := "JOSN Marshal 失败"
-		log.Println(msg)
-		resp.Code = -6
-		resp.Msg = msg
-		return
-	}
+	// 调用文件传输微服务
+	transferResp, err := transferCli.Transfer(context.TODO(), &proto.ReqTrans{
+		FileSha1:     fileMeta.FileSha1,
+		CurLocation:  fileMeta.Location,
+		DestLocation: "oss/" + header.Filename,
+	})
 
-	ok = mq.Publish(config.TransExchangeName, config.TransOSSRoutingKey, pubData)
-	log.Println("Producer publish", string(pubData), "to", config.TransExchangeName)
-	if !ok {
-		// TODO: 加入重试发送逻辑
-		msg := "文件写入OSS失败"
-		log.Println(msg)
-		resp.Code = -7
-		resp.Msg = msg
+	if err != nil {
+		log.Println(transferResp.Message)
+		resp.Code = -6
+		resp.Msg = transferResp.Message
 		return
 	}
 
