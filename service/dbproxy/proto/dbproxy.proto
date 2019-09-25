@@ -1,0 +1,138 @@
+syntax = "proto3";
+
+package proto;
+
+service DBProxyService {
+    // tbl_file
+    rpc UploadFile(ReqUploadFile) returns (RespUploadFile) {}
+    rpc FileMeta(ReqFileMeta) returns (RespFileMeta) {}
+    rpc UpdateFileLocation(ReqUpdateFileLocation) returns (RespUpdateFileLocation) {}
+
+    // tbl_user_file
+    rpc UploadUserFile (ReqUploadUserFile) returns (RespUploadUserFile) {}
+    rpc QueryUserFile (ReqQueryUserFile) returns (RespQueryUserFile) {}
+
+    // tbl_user
+    rpc SignupUser (ReqSignupUser) returns (RespSignupUser) {}
+    rpc SigninUser (ReqSigninUser) returns (RespSigninUser) {}
+    rpc UserInfo (ReqUserInfo) returns (RespUserInfo) {}
+
+    // tbl_token
+    rpc Token (ReqToken) returns (RespToken) {}
+    rpc UpdateToken (ReqUpdateToken) returns (RespUpdateToken) {}
+}
+
+message ReqUploadFile {
+    string fileSha1 = 1;
+    string fileName = 2;
+    int64 fileSize = 3;
+    string fileAddr = 4;
+}
+
+message RespUploadFile {
+    int32 code = 1;
+    string message = 2;
+}
+
+message ReqFileMeta {
+    string fileSha1 = 1;
+}
+
+message RespFileMeta {
+    int32 code = 1;
+    string message = 2;
+    string fileSha1 = 3;
+    string fileName = 4;
+    int64 fileSize = 5;
+    string fileAddr = 6;
+}
+
+message ReqUpdateFileLocation {
+    string fileSha1 = 1;
+    string fileAddr = 2;
+}
+
+message RespUpdateFileLocation {
+    int32 code = 1;
+    string message = 2;
+}
+
+message ReqUploadUserFile {
+    string username = 1;
+    string fileSha1 = 2;
+    string fileName = 3;
+    int64 fileSize = 4;
+}
+
+message RespUploadUserFile {
+    int32 code = 1;
+    string message = 2;
+}
+
+message ReqQueryUserFile {
+    string username = 1;
+    int32 limit = 2;
+}
+
+message RespQueryUserFile {
+    int32 code = 1;
+    string message = 2;
+    bytes userFileByte = 3;
+}
+
+message ReqSignupUser {
+    string username = 1;
+    string passwd = 2;
+}
+
+message RespSignupUser {
+    int32 code = 1;
+    string message = 2;
+}
+
+message ReqSigninUser {
+    string username = 1;
+    string encpwd = 2;
+}
+
+message RespSigninUser {
+    int32 code = 1;
+    string message = 2;
+}
+
+message ReqUserInfo {
+    string username = 1;
+}
+
+message RespUserInfo {
+    int32 code = 1;
+    string message = 2;
+    string username = 3;
+    string email = 4;
+    string phone = 5;
+    bool emailValidated = 6;
+    bool phoneValidated = 7;
+    string signupAt = 8;
+    string lastActive = 9;
+    int32 status = 10;
+}
+
+message ReqToken {
+    string username = 1;
+}
+
+message RespToken {
+    int32 code = 1;
+    string message = 2;
+    string token = 3;
+}
+
+message ReqUpdateToken {
+    string username = 1;
+    string token = 2;
+}
+
+message RespUpdateToken {
+    int32 code = 1;
+    string message = 2;
+}

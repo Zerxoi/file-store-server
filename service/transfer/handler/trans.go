@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"file-store-server/common"
 	"file-store-server/config"
-	"file-store-server/mq"
+	"file-store-server/service/transfer/mq"
 	"file-store-server/service/transfer/proto"
 	"fmt"
 	"log"

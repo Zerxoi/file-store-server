@@ -3,13 +3,16 @@ package handler
 import (
 	"context"
 	"file-store-server/config"
-	"file-store-server/db"
 	userProto "file-store-server/service/account/proto"
+	dbProxy "file-store-server/service/dbproxy/proto"
+	"file-store-server/service/dbproxy/rpc"
 	upProto "file-store-server/service/upload/proto"
 	"file-store-server/util"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro"
@@ -72,6 +75,7 @@ func POSTSigninHandler(c *gin.Context) {
 		c.Error(err) // 响应内容为空
 		return
 	}
+
 	upResp, err := upCli.UploadEntry(context.TODO(), &upProto.ReqEntry{})
 	if err != nil {
 		log.Println(err)
@@ -122,7 +126,7 @@ func POSTFileQueryHandler(c *gin.Context) {
 func HTTPInterceptor(c *gin.Context) {
 	username := c.Request.FormValue("username")
 	token := c.Request.FormValue("token")
-	ok := db.IsTokenValid(username, token)
+	ok := IsTokenValid(username, token)
 	if !ok {
 		c.Abort()
 		log.Println("Token is not validated")
@@ -135,4 +139,35 @@ func HTTPInterceptor(c *gin.Context) {
 		return
 	}
 	c.Next()
+}
+
+// IsTokenValid 验证Token 是否有效
+func IsTokenValid(username, token string) bool {
+	// 检查token时效性
+	var st int64
+	_, err := fmt.Sscanf(token[32:], "%x", &st)
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	if time.Now().Unix()-int64(st) > 86400 { // 一天之内有效
+		log.Println("Token out of date")
+		return false
+	}
+
+	// 验证token是否相等
+	tokenResp, err := rpc.Client().Token(context.TODO(), &dbProxy.ReqToken{
+		Username: username,
+	})
+	if err != nil {
+		log.Println(err)
+		return false
+	}
+	dbtoken := tokenResp.Token
+
+	if dbtoken[:32] == token[:32] {
+		return true
+	}
+
+	return false
 }

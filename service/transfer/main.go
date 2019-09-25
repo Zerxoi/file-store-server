@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"file-store-server/config"
-	"file-store-server/db"
-	"file-store-server/mq"
+	dbProto "file-store-server/service/dbproxy/proto"
+	"file-store-server/service/dbproxy/rpc"
 	"file-store-server/service/transfer/handler"
+	"file-store-server/service/transfer/mq"
 	"file-store-server/service/transfer/proto"
 	"file-store-server/store/oss"
 	"log"
@@ -40,11 +42,15 @@ func ProcesstTransfer(msg []byte) bool {
 	}
 
 	// 4. 更新文件存储路径到文件表
-	ok := db.UpdateFileLocation(pubData.FileSha1, pubData.DestLocation)
-	if !ok {
-		log.Println("ProcesstTransfer: Failed to update file's location.")
+	_, err = rpc.Client().UpdateFileLocation(context.TODO(), &dbProto.ReqUpdateFileLocation{
+		FileSha1: pubData.FileSha1,
+		FileAddr: pubData.DestLocation,
+	})
+	if err != nil {
+		log.Println(err)
 		return false
 	}
+
 	err = os.Remove(pubData.CurLocation)
 	if err != nil {
 		log.Println("云端上传完成,删除本地文件失败!")

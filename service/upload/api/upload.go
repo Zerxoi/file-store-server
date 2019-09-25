@@ -2,15 +2,14 @@ package api
 
 import (
 	"context"
-	"file-store-server/db"
-	"file-store-server/meta"
+	dbProto "file-store-server/service/dbproxy/proto"
+	"file-store-server/service/dbproxy/rpc"
 	"file-store-server/service/transfer/proto"
 	"file-store-server/util"
 	"io"
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/micro/go-micro"
 
@@ -59,13 +58,10 @@ func POSTUploadHandler(c *gin.Context) {
 	}
 	defer f.Close()
 
-	fileMeta := meta.FileMeta{
-		FileName: header.Filename,
-		Location: "/tmp/" + header.Filename,
-		UploadAt: time.Now().Format("2006-01-02 15:04:05"),
-	}
+	filename := header.Filename
+	fileaddr := "/tmp/" + filename
 
-	nf, err := os.Create(fileMeta.Location)
+	nf, err := os.Create(fileaddr)
 	if err != nil {
 		msg := "创建文件失败"
 		log.Println(msg)
@@ -75,7 +71,7 @@ func POSTUploadHandler(c *gin.Context) {
 	}
 	defer nf.Close()
 
-	fileMeta.FileSize, err = io.Copy(nf, f)
+	filesize, err := io.Copy(nf, f)
 	if err != nil {
 		msg := "文件复制失败"
 		log.Println(msg)
@@ -85,38 +81,46 @@ func POSTUploadHandler(c *gin.Context) {
 	}
 
 	nf.Seek(0, 0)
-	fileMeta.FileSha1 = util.FileSha1(nf)
+	filesha1 := util.FileSha1(nf)
 
-	ok := meta.UpdateFileMetaDB(fileMeta)
-	if !ok {
-		msg := "数据库元信息更新失败"
-		log.Println(msg)
+	_, err = rpc.Client().UploadFile(context.TODO(), &dbProto.ReqUploadFile{
+		FileSha1: filesha1,
+		FileName: filename,
+		FileSize: filesize,
+		FileAddr: fileaddr,
+	})
+	if err != nil {
+		log.Println(err)
 		resp.Code = -4
-		resp.Msg = msg
+		resp.Msg = err.Error()
 		return
 	}
 
 	username := c.Request.FormValue("username")
-	ok = db.OnUserFileUploadFinished(username, fileMeta.FileSha1, fileMeta.FileName, fileMeta.FileSize)
-	if !ok {
-		msg := "用户文件列表更新失败"
-		log.Println(msg)
+	_, err = rpc.Client().UploadUserFile(context.TODO(), &dbProto.ReqUploadUserFile{
+		Username: username,
+		FileSha1: filesha1,
+		FileSize: filesize,
+		FileName: filename,
+	})
+	if err != nil {
+		log.Println(err)
 		resp.Code = -5
-		resp.Msg = msg
+		resp.Msg = err.Error()
 		return
 	}
 
 	// 调用文件传输微服务
-	transferResp, err := transferCli.Transfer(context.TODO(), &proto.ReqTrans{
-		FileSha1:     fileMeta.FileSha1,
-		CurLocation:  fileMeta.Location,
+	_, err = transferCli.Transfer(context.TODO(), &proto.ReqTrans{
+		FileSha1:     filesha1,
+		CurLocation:  fileaddr,
 		DestLocation: "oss/" + header.Filename,
 	})
 
 	if err != nil {
-		log.Println(transferResp.Message)
+		log.Println(err)
 		resp.Code = -6
-		resp.Msg = transferResp.Message
+		resp.Msg = err.Error()
 		return
 	}
 

@@ -15,8 +15,12 @@ func main() {
 	)
 	service.Init()
 
-	proto.RegisterUserServiceHandler(service.Server(), new(handler.User))
-	if err := service.Run(); err != nil {
+	err := proto.RegisterUserServiceHandler(service.Server(), new(handler.User))
+	if err != nil {
+		log.Println(err)
+	}
+
+	if err = service.Run(); err != nil {
 		log.Println(err)
 	}
 }
