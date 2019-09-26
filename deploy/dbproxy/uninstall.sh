@@ -7,5 +7,5 @@ docker stop dbproxy
 echo "删除容器 dbproxy"
 docker rm dbproxy
 
-echo "删除镜像 dbproxy"
-docker image rm dbproxy
+echo "删除镜像 fileserver/dbproxy"
+docker image rm fileserver/dbproxy

@@ -7,5 +7,5 @@ docker stop transfer
 echo "删除容器 transfer"
 docker rm transfer
 
-echo "删除镜像 transfer"
-docker image rm transfer
+echo "删除镜像 fileserver/transfer"
+docker image rm fileserver/transfer

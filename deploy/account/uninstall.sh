@@ -7,5 +7,5 @@ docker stop account
 echo "删除容器 account"
 docker rm account
 
-echo "删除镜像 account"
-docker image rm account
+echo "删除镜像 fileserver/account"
+docker image rm fileserver/account

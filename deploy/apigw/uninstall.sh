@@ -7,5 +7,5 @@ docker stop apigw
 echo "删除容器 apigw"
 docker rm apigw
 
-echo "删除镜像 apigw"
-docker image rm apigw
+echo "删除镜像 fileserver/apigw"
+docker image rm fileserver/apigw
