@@ -5,4 +5,4 @@ echo "创建镜像 transfer"
 docker build -t transfer .
 
 echo "启动容器 transfer"
-docker run -d --name=transfer transfer
+docker run -d --name=transfer -v /home/zerxoi/fileserver:/fileserver transfer

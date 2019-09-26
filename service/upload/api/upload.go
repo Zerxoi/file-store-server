@@ -67,7 +67,7 @@ func POSTUploadHandler(c *gin.Context) {
 	defer f.Close()
 
 	filename := header.Filename
-	fileaddr := "/tmp/" + filename
+	fileaddr := "/fileserver/" + filename
 
 	nf, err := os.Create(fileaddr)
 	if err != nil {

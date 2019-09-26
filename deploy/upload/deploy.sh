@@ -5,4 +5,4 @@ echo "创建镜像 upload"
 docker build -t upload .
 
 echo "启动容器 upload"
-docker run -d --name=upload -p 28000:28000 upload
+docker run -d --name=upload -p 28000:28000 -v /home/zerxoi/fileserver:/fileserver upload

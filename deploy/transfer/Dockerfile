@@ -1,4 +1,4 @@
-FROM scratch
+FROM centos:7
 
 ADD transfer /
 
