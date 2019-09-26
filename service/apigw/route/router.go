@@ -10,7 +10,7 @@ import (
 func Router() *gin.Engine {
 	router := gin.Default()
 
-	router.Static("/static/", "./static")
+	router.Static("/static/", "/static")
 
 	router.GET("/user/signup", handler.GETSignupHandler)
 	router.POST("/user/signup", handler.POSTSignupHandler)

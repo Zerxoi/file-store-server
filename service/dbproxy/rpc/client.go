@@ -4,13 +4,22 @@ import (
 	"file-store-server/service/dbproxy/proto"
 	"log"
 
+	"github.com/micro/go-micro/registry"
+	"github.com/micro/go-micro/registry/consul"
+
 	"github.com/micro/go-micro"
 )
 
 var dbCli proto.DBProxyService
 
 func init() {
-	service := micro.NewService()
+	reg := consul.NewRegistry(func(op *registry.Options) {
+		op.Addrs = []string{
+			"172.17.0.1:8500",
+		}
+	})
+
+	service := micro.NewService(micro.Registry(reg))
 	service.Init()
 	dbCli = proto.NewDBProxyService("go.micro.service.dbproxy", service.Client())
 }

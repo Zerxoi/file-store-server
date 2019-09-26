@@ -16,6 +16,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/micro/go-micro"
+	"github.com/micro/go-micro/registry"
+	"github.com/micro/go-micro/registry/consul"
 )
 
 var (
@@ -24,7 +26,13 @@ var (
 )
 
 func init() {
-	service := micro.NewService()
+	reg := consul.NewRegistry(func(op *registry.Options) {
+		op.Addrs = []string{
+			"172.17.0.1:8500",
+		}
+	})
+
+	service := micro.NewService(micro.Registry(reg))
 	// 初始化,解析命令行参数
 	service.Init()
 
