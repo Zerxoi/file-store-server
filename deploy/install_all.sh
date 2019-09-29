@@ -1,10 +1,10 @@
 cd account
-sh deploy.sh
+sh install.sh
 cd ../apigw
-sh deploy.sh
+sh install.sh
 cd ../dbproxy
-sh deploy.sh
+sh install.sh
 cd ../transfer
-sh deploy.sh
+sh install.sh
 cd ../upload
-sh deploy.sh  
+sh install.sh  
