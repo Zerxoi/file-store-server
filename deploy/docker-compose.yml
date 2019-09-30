@@ -1,21 +1,39 @@
- version: '3'
+version: '3'
 
- services:
+services:
+  reverse-proxy:
+    image: traefik
+    # Enables the web UI and tells Traefik to listen to docker
+    command: --api.insecure=true --providers.docker=true
+    ports:
+      # The HTTP port
+      - "80:80"
+      # The Web UI (enabled by --api.insecure=true)
+      - "7000:8080"
+    volumes:
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
   apigw:
     image: fileserver/apigw
-    ports:
-      - "8000:8000"
+    labels:
+      - "traefik.http.routers.apigw.rule=Host(`apigw.localhost`)"
   upload:
     image: fileserver/upload
-    ports:
-      - "28000:28000"
     volumes:
       - "/home/zerxoi/fileserver:/fileserver"
+    labels:
+      - "traefik.http.routers.upload.rule=Host(`upload.localhost`)"
   account:
     image: fileserver/account
+    labels:
+      - "traefik.http.routers.account.rule=Host(`account.localhost`)"
   transfer:
     image: fileserver/transfer
     volumes:
       - "/home/zerxoi/fileserver:/fileserver"
+    labels:
+      - "traefik.http.routers.transfer.rule=Host(`transfer.localhost`)"
   dbproxy:
     image: fileserver/dbproxy
+    labels:
+      - "traefik.http.routers.dbproxy.rule=Host(`dbproxy.localhost`)"
